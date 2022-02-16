@@ -16,21 +16,17 @@ extern int CONNECTED_BIT;
 
 void tcp_server(void *pvParameters)
 {
-    EventBits_t xEventGroupValue;
-    const EventBits_t xBitsToWaitFor = CONNECTED_BIT;
-
     char read_data[1024];
     int read_len = 0;
 
-    int addr_family = ((int)pvParameters == 4) ? AF_INET : AF_INET6;
     int listen_sock = -1;
     struct sockaddr_in sa;
 
-    xEventGroupValue = xEventGroupWaitBits(wifi_event_group, xBitsToWaitFor, pdTRUE, pdFALSE, portMAX_DELAY);
+    xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, pdTRUE, pdFALSE, portMAX_DELAY);
 
     ESP_LOGI(TAG, "tcp_server is CONNECTED");
 
-    listen_sock = socket(addr_family, SOCK_STREAM, 0);
+    listen_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (listen_sock < 0)
     {
         ESP_LOGE(TAG, "Unable to create socket");
@@ -66,21 +62,33 @@ void tcp_server(void *pvParameters)
 
     ESP_LOGI(TAG, "Socket listening");
 
-    int ConnectFD = accept(listen_sock, NULL, NULL);
-    if (ConnectFD < 0)
-    {
-        ESP_LOGE(TAG, "accept failed");
-        close(listen_sock);
-        vTaskDelete(NULL);
-        return;
-    }
-
     for (;;)
     {
-        read_len = read(ConnectFD, read_data, sizeof(read_data));
-        read_data[read_len] = '\0';
-        ESP_LOGI(TAG, "read_len: %d, read_data: %s", read_len, read_data);
+        int ConnectFD = accept(listen_sock, NULL, NULL);
+        if (ConnectFD < 0)
+        {
+            ESP_LOGE(TAG, "accept failed");
+            close(listen_sock);
+            vTaskDelete(NULL);
+            return;
+        }
+
+        for (;;)
+        {
+
+            read_len = read(ConnectFD, read_data, sizeof(read_data));
+            if (read_len <= 0)
+            {
+                break;
+            }
+            read_data[read_len] = '\0';
+            ESP_LOGI(TAG, "read_len: %d, read_data: %s", read_len, read_data);
+            write(ConnectFD, read_data, read_len);
+
+            // shutdown(ConnectFD, 0);
+            // close(ConnectFD);
+        }
+        ESP_LOGI(TAG, "client had losed");
+        close(ConnectFD);
     }
-
-
 }

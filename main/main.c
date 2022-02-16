@@ -14,11 +14,9 @@ extern void tcp_server(void *pvParameters);
 
 void app_main(void)
 {
-    blufi_init();
-
     ESP_LOGI(TAG, "Hello world!\n");
-    xTaskCreate(task_func, "task1", 4096, "task1", 5, NULL);
-    xTaskCreate(task_func, "task2", 4096, "task2", 5, NULL);
+
+    blufi_init();
     xTaskCreate(tcp_server, "tcp_server", 4096, 4, 5, NULL);
 }
 
