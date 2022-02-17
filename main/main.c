@@ -12,12 +12,17 @@ extern void blufi_init(void);
 void task_func(void *param);
 extern void tcp_server(void *pvParameters);
 
+extern void gpio_test(void);
+
 void app_main(void)
 {
     ESP_LOGI(TAG, "Hello world!\n");
+    gpio_test();
 
+#if 0
     blufi_init();
     xTaskCreate(tcp_server, "tcp_server", 4096, 4, 5, NULL);
+#endif
 }
 
 void task_func(void *param)
